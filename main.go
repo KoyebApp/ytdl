@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/kkdai/youtube/v2"
 )
@@ -15,12 +16,44 @@ import (
 func main() {
 	http.HandleFunc("/ytmp4", ytmp4Handler)
 	http.HandleFunc("/ytm3", ytm3Handler)
+
+	// Start periodic fetcher goroutine
+	go startPeriodicFetch()
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 	fmt.Printf("Server starting on port %s...\n", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
+}
+
+// Periodically fetches the API URL from FETCH_API_URL env var every 5 minutes
+func startPeriodicFetch() {
+	apiURL := os.Getenv("FETCH_API_URL")
+	if apiURL == "" {
+		log.Println("FETCH_API_URL not set; periodic fetcher will not run.")
+		return
+	}
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+
+	// Fetch once immediately at startup
+	fetchAndLog(apiURL)
+	for range ticker.C {
+		fetchAndLog(apiURL)
+	}
+}
+
+func fetchAndLog(url string) {
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Printf("Error fetching %s: %v", url, err)
+		return
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	log.Printf("Fetched %s: status %s, body: %s", url, resp.Status, string(body))
 }
 
 func ytmp4Handler(w http.ResponseWriter, r *http.Request) {
