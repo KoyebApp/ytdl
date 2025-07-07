@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: youtube-downloader-api
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
