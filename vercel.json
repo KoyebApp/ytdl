@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/*.go",
+      "use": "@vercel/go"
+    }
+  ],
+  "routes": [
+    { "src": "/api/ytmp4", "dest": "api/ytmp4.go" },
+    { "src": "/api/ytm3", "dest": "api/ytm3.go" }
+  ]
+}
